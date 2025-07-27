@@ -1,6 +1,6 @@
-
 import React, { useState } from 'react';
-import HeaderLogo from '@/components/HeaderLogo';
+import { AnimatePresence, motion } from 'framer-motion';
+import { ArrowLeft, Home, BarChart3, Sparkles, Zap, Target, FlaskConical } from 'lucide-react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import InputSection from '@/components/InputSection';
@@ -9,8 +9,9 @@ import OptimizedResumeDisplay from '@/components/OptimizedResumeDisplay';
 import BuildingResumeView from '@/components/BuildingResumeView';
 import { AnalysisResult, OptimizedResume, analyzeResumeWithGemini, buildOptimizedResume } from '@/services/gemini';
 import { toast } from 'sonner';
-import { ArrowLeft, Home, BarChart3, Sparkles, Zap, Target } from 'lucide-react';
 import ModernButton from '@/components/ui/ModernButton';
+import NavigationBar from '@/components/NavigationBar';
+import Mascot from '@/components/Mascot';
 
 type AppState = 'input' | 'analyzing' | 'results' | 'building-resume' | 'optimized';
 
@@ -94,110 +95,44 @@ const MainApp = () => {
     }
   };
 
-  const getPageTitle = () => {
+  const renderContent = () => {
     switch (currentState) {
-      case 'input': return 'Upload & Analyze';
-      case 'analyzing': return 'AI Analysis in Progress';
-      case 'results': return 'Resume Analysis Results';
-      case 'building-resume': return 'Building Perfect Resume';
-      case 'optimized': return 'Your Optimized Resume';
-      default: return 'Resume Analyzer';
+      case 'input':
+        return <InputSection onAnalyze={handleAnalyze} isLoading={isLoading} />;
+      case 'analyzing':
+        return <BuildingResumeView />;
+      case 'results':
+        return <AnalysisDashboard results={analysisResults!} onBack={handleBackToInput} onBuildResume={handleBuildResume} />;
+      case 'building-resume':
+        return <BuildingResumeView />;
+      case 'optimized':
+        return <OptimizedResumeDisplay resume={optimizedResume!} onBack={handleBackToResults} />;
+      default:
+        return null;
     }
   };
-
-  const getPageIcon = () => {
-    switch (currentState) {
-      case 'input': return Home;
-      case 'analyzing': case 'building-resume': return Sparkles;
-      case 'results': return BarChart3;
-      case 'optimized': return Target;
-      default: return Home;
-    }
-  };
-
-  const PageIcon = getPageIcon();
 
   return (
-    <div className="min-h-screen relative overflow-hidden hero-mesh">
+    <div className="min-h-screen bg-gray-900 text-white">
       <Toaster />
       <Sonner />
-      
-      {/* Dynamic Background Elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute w-96 h-96 -top-48 -left-48 bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-full animate-float" />
-        <div className="absolute w-64 h-64 top-1/4 -right-32 bg-gradient-to-br from-pink-500/10 to-red-500/10 rounded-full animate-float" style={{ animationDelay: '2s' }} />
-        <div className="absolute w-80 h-80 -bottom-40 -left-40 bg-gradient-to-br from-green-500/10 to-teal-500/10 rounded-full animate-float" style={{ animationDelay: '4s' }} />
-      </div>
-
-      {/* Premium Navbar */}
-      <header className="navbar-sticky">
-        <div className="container mx-auto px-responsive">
-          <div className="flex h-20 items-center justify-between">
-            {/* Logo/Brand */}
-            <HeaderLogo size={56} />
-
-            {/* Navigation Status */}
-            <div className="hidden md:flex items-center gap-4">
-              <div className="bg-white rounded-2xl shadow-xl px-8 py-4 border border-gray-100">
-                <span className="text-lg font-bold text-gray-800">{getPageTitle()}</span>
-              </div>
-            </div>
-
-            {/* Mobile Title */}
-            <div className="sm:hidden text-center flex-1 mx-4">
-              <h1 className="text-xl font-black text-gradient-primary truncate">
-                {getPageTitle()}
-              </h1>
-            </div>
-
-            {/* Action Button */}
-            <div className="flex items-center">
-              {currentState !== 'input' && (
-                <ModernButton
-                  variant="secondary"
-                  onClick={handleBackToInput}
-                  className="group"
-                >
-                  <ArrowLeft className="h-5 w-5 mr-2 transition-transform group-hover:-translate-x-1" />
-                  <span className="hidden sm:inline font-bold">New Analysis</span>
-                </ModernButton>
-              )}
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
       <main className="relative z-10 container mx-auto px-responsive py-12">
-        <div className="max-w-7xl mx-auto">
-          {currentState === 'input' && (
-            <InputSection onAnalyze={handleAnalyze} isLoading={isLoading} />
-          )}
-
-          {currentState === 'analyzing' && (
-            <BuildingResumeView />
-          )}
-
-          {currentState === 'results' && analysisResults && (
-            <AnalysisDashboard 
-              results={analysisResults} 
-              onBack={handleBackToInput}
-              onBuildResume={handleBuildResume}
-            />
-          )}
-
-          {currentState === 'building-resume' && (
-            <BuildingResumeView />
-          )}
-
-          {currentState === 'optimized' && optimizedResume && (
-            <OptimizedResumeDisplay 
-              resume={optimizedResume} 
-              onBack={handleBackToResults} 
-            />
-          )}
-        </div>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={currentState}
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -50 }}
+            transition={{ duration: 0.5 }}
+          >
+            {renderContent()}
+          </motion.div>
+        </AnimatePresence>
       </main>
+      <NavigationBar />
+      <div className="fixed bottom-20 right-4">
+        <Mascot />
+      </div>
     </div>
   );
 };

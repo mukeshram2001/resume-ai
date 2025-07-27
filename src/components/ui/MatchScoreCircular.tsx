@@ -1,5 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
 
 interface MatchScoreCircularProps {
   score: number;
@@ -12,11 +13,8 @@ const MatchScoreCircular: React.FC<MatchScoreCircularProps> = ({
   size = 200,
   strokeWidth = 16,
 }) => {
-  const [displayScore, setDisplayScore] = useState(0);
-
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
-  const offset = circumference - (displayScore / 100) * circumference;
 
   const scoreColor =
     score < 40 ? 'text-red-600' : score < 70 ? 'text-blue-600' : 'text-green-600';
@@ -24,23 +22,6 @@ const MatchScoreCircular: React.FC<MatchScoreCircularProps> = ({
   const scoreGradientId = `scoreGradient-${score}`;
   const scoreGradientColor = 
     score < 40 ? '#DC2626' : score < 70 ? '#2563EB' : '#059669';
-
-  useEffect(() => {
-    let animationFrameId: number;
-    const animateScore = (timestamp: number) => {
-      if (displayScore < score) {
-        setDisplayScore(prev => Math.min(prev + 1, score));
-        animationFrameId = requestAnimationFrame(animateScore);
-      }
-    };
-    animationFrameId = requestAnimationFrame(animateScore);
-    return () => cancelAnimationFrame(animationFrameId);
-  }, [score]);
-  
-  useEffect(() => {
-    // Reset animation when score changes
-    setDisplayScore(0);
-  }, [score]);
 
   return (
     <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
@@ -59,7 +40,7 @@ const MatchScoreCircular: React.FC<MatchScoreCircularProps> = ({
           strokeWidth={strokeWidth}
           fill="transparent"
         />
-        <circle
+        <motion.circle
           cx={size / 2}
           cy={size / 2}
           r={radius}
@@ -67,13 +48,21 @@ const MatchScoreCircular: React.FC<MatchScoreCircularProps> = ({
           strokeWidth={strokeWidth}
           fill="transparent"
           strokeDasharray={circumference}
-          strokeDashoffset={offset}
           strokeLinecap="round"
-          style={{ transition: 'stroke-dashoffset 1.5s ease-out' }}
+          initial={{ strokeDashoffset: circumference }}
+          animate={{ strokeDashoffset: circumference - (score / 100) * circumference }}
+          transition={{ duration: 1.5, ease: "easeInOut" }}
         />
       </svg>
       <div className={`absolute flex flex-col items-center ${scoreColor}`}>
-        <span className="text-4xl md:text-5xl font-bold tracking-tighter">{Math.round(displayScore)}</span>
+        <motion.span
+          className="text-4xl md:text-5xl font-bold tracking-tighter"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.5 }}
+        >
+          {score}
+        </motion.span>
         <span className="text-base md:text-lg font-medium text-muted-foreground">% Match</span>
       </div>
     </div>
